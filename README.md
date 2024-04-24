@@ -1,3 +1,3 @@
-For Image use Zebra connection.
+For Images use Zebra connection.
 
-<img src="img_girl.jpg" alt="screen shots">
+<img src="https://github.com/nssoftengineer/BluetoothPrinter/blob/master/content/screen1.jpeg" alt="screen shots">

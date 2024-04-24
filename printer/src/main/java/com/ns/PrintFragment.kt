@@ -6,11 +6,13 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
@@ -18,11 +20,12 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.ns.printer.*
+import com.ns.printer.databinding.PrintFragmentBinding
 import com.ns.printer.dialog.ChooseBTDeviceDialog
 import com.ns.printer.model.PrinterManufacturer
+import com.ns.printer.model.RoutePrinter
 import com.ns.printer.model.prefs.Preferences
 import com.ns.printer.model.prefs.PrintPreferences
-import com.ns.printer.databinding.PrintFragmentBinding
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -274,14 +277,50 @@ class PrintFragment : Fragment() {
         binding.printBtn.setOnClickListener {
             print()
         }
+        binding.printBtn2.setOnClickListener {
+            printImage()
+        }
         if (!PrintPreferences.getInstance(requireContext()).macAddress.isNullOrEmpty() &&
             !PrintPreferences.getInstance(requireContext()).deviceName.isNullOrEmpty() &&
             !PrintPreferences.getInstance(requireContext()).manufacturer.isNullOrEmpty()) {
             binding.connectBtn.visibility = View.GONE
             binding.printBtn.visibility = View.VISIBLE
+            binding.printBtn2.visibility = View.VISIBLE
             binding.connectivityStatusView.visibility = View.VISIBLE
             binding.connectivityStatusView.bindData { startConnectivityFlow() }
         }
+    }
+
+    private fun printImage() {
+        val content: LinearLayout = binding.container
+        content.isDrawingCacheEnabled = true
+        val bitmap: Bitmap = content.getDrawingCache()
+
+        val printer: RoutePrinter
+
+        printer = ZebraPrinter.getInstance()
+        Single.fromCallable {
+            printer.print(bitmap!!, PrintPreferences.getInstance(requireContext()).macAddress!!)
+        }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .timeout(10, TimeUnit.SECONDS)
+            .subscribe(
+                {
+                    binding.progressBar.visibility = View.GONE
+                    binding.container.alpha = 1f
+                    showToast("Print status : $it")
+                },
+                {
+
+                    requireActivity().runOnUiThread {
+                        // Stuff that updates the UI
+                        binding.progressBar.visibility = View.GONE
+                        binding.container.alpha = 1f
+                        showToast("Failed to print.$it")
+                    }
+                })
+
     }
 
     private fun showToast(message: String) {

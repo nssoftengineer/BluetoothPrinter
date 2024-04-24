@@ -12,7 +12,7 @@
         android:layout_gravity="center"
         android:paddingTop="10dp" />
 
-    <com.radko.printer.view.BaseTextView
+    <com.ns.printer.view.BaseTextView
         android:id="@+id/value"
         android:layout_width="match_parent"
         android:layout_height="50dp"
